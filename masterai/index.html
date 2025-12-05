@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PC Build Assistant AI</title>
+    <style>
+        /* --- ТЕХНОЛОГІЧНИЙ ДИЗАЙН --- */
+        body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background-color: #0f172a;
+            /* Темно-синій фон (майже чорний) */
+            background-image: radial-gradient(circle at top right, #1e293b 0%, #0f172a 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: #e2e8f0;
+        }
+
+        .chat-card {
+            width: 500px;
+            height: 85vh;
+            background: #202c41;
+            /* Трохи світліший блок */
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(148, 163, 184, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Ефект світіння зверху */
+        .chat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6, #3b82f6);
+            background-size: 200% 100%;
+            animation: glow 5s linear infinite;
+        }
+
+        @keyframes glow {
+            0% {
+                background-position: 100% 0;
+            }
+
+            100% {
+                background-position: -100% 0;
+            }
+        }
+
+        .chat-header {
+            background: rgba(30, 41, 59, 0.95);
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid #334155;
+            z-index: 10;
+        }
+
+        .chat-header h2 {
+            margin: 0;
+            font-size: 18px;
+            color: #fff;
+            letter-spacing: 0.5px;
+        }
+
+        .chat-header span {
+            font-size: 12px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .chat-box {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            scroll-behavior: smooth;
+        }
+
+        /* Стиль скролбару */
+        .chat-box::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-box::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+
+        .chat-box::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+
+        .message {
+            max-width: 85%;
+            padding: 14px 18px;
+            border-radius: 12px;
+            line-height: 1.6;
+            font-size: 14px;
+            position: relative;
+            word-wrap: break-word;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Повідомлення користувача */
+        .user-msg {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 2px;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        /* Повідомлення бота */
+        .bot-msg {
+            background: #334155;
+            color: #f1f5f9;
+            align-self: flex-start;
+            border-bottom-left-radius: 2px;
+            border: 1px solid #475569;
+        }
+
+        .error-msg {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            border: 1px solid #ef4444;
+            align-self: center;
+            font-size: 12px;
+        }
+
+        .input-area {
+            padding: 20px;
+            background: #1e293b;
+            border-top: 1px solid #334155;
+            display: flex;
+            gap: 12px;
+        }
+
+        input {
+            flex: 1;
+            padding: 14px 20px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: white;
+            border-radius: 50px;
+            outline: none;
+            transition: 0.3s;
+            font-size: 14px;
+        }
+
+        input:focus {
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+        }
+
+        input::placeholder {
+            color: #64748b;
+        }
+
+        button {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: 0.3s;
+            box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
+        }
+
+        button:disabled {
+            background: #475569;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        button svg {
+            fill: white;
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Маркери списків в тексті бота */
+        .bot-msg ul {
+            margin: 5px 0 5px 20px;
+            padding: 0;
+        }
+
+        .bot-msg li {
+            margin-bottom: 5px;
+        }
+
+        .bot-msg strong {
+            color: #bfdbfe;
+            font-weight: 600;
+        }
+
+        .typing {
+            font-size: 12px;
+            color: #64748b;
+            margin-left: 20px;
+            margin-bottom: 10px;
+            display: none;
+            font-style: italic;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="chat-card">
+        <div class="chat-header">
+            <h2>TECH MASTER AI</h2>
+            <span>Expert PC Builder</span>
+        </div>
+        <div class="chat-box" id="chat-box">
+            <div class="message bot-msg">
+                Привіт! Я твій помічник зі збірки ПК. 🖥️<br><br>
+                Чим можу допомогти?<br>
+                • Підібрати комплектуючі під бюджет<br>
+                • Перевірити сумісність<br>
+                • Порівняти відеокарти/процесори
+            </div>
+        </div>
+        <div class="typing" id="typing">AI друкує...</div>
+        <div class="input-area">
+            <input type="text" id="user-input" placeholder="Наприклад: Збірка для ігор за 30к грн..."
+                autocomplete="off">
+            <button id="send-btn" onclick="sendMessage()">
+                <svg viewBox="0 0 24 24">
+                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // 🔑 ВСТАВТЕ ВАШ КЛЮЧ ТУТ
+        const API_KEY = "AIzaSyAXt7jGtZoEvD-QDndKZCo3U-XMI9kqEd4";
+        // ============================================================
+
+        const MODEL_NAME = "gemini-2.0-flash";
+
+        // --- НАЛАШТУВАННЯ ПОВЕДІНКИ БОТА (SYSTEM INSTRUCTION) ---
+        // Це "мізки" і "характер" вашого бота.
+        const SYSTEM_PROMPT = `
+    Ти — професійний консультант із комп'ютерних комплектуючих та технологій (PC Build Assistant).
+    
+    Твої правила:
+    1. Тон: Професійний, ввічливий, спокійний, але доступний для новачків.
+    2. Стиль відповідей: Структурований (використовуй списки, жирний шрифт). Не пиши суцільний текст.
+    3. Ціль: Допомагати підбирати ПК, перевіряти сумісність, пояснювати різницю між деталями.
+    4. Завжди уточнюй бюджет та цілі користувача, якщо вони не вказані.
+    5. Якщо пропониш збірку, давай варіанти (Бюджетний, Оптимальний, Топ).
+    6. Попереджай про несумісність чесно.
+    7. Мова спілкування: Українська.
+    `;
+
+        // Історія чату (щоб бот пам'ятав попередні повідомлення)
+        let chatHistory = [];
+
+        async function sendMessage() {
+            const input = document.getElementById('user-input');
+            const btn = document.getElementById('send-btn');
+            const typing = document.getElementById('typing');
+
+            const text = input.value.trim();
+            if (!text) return;
+
+            // 1. UI: Додаємо повідомлення користувача
+            appendMessage(text, 'user-msg');
+            input.value = '';
+            btn.disabled = true;
+            typing.style.display = 'block';
+
+            // Зберігаємо запит в історію
+            chatHistory.push({ role: "user", parts: [{ text: text }] });
+
+            try {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${API_KEY}`;
+
+                // 2. Формуємо тіло запиту
+                const requestBody = {
+                    // Додаємо системну інструкцію (характер)
+                    system_instruction: {
+                        parts: [{ text: SYSTEM_PROMPT }]
+                    },
+                    // Відправляємо всю історію переписки для контексту
+                    contents: chatHistory
+                };
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestBody)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) throw new Error(data.error?.message || "Error");
+
+                const botReply = data.candidates[0].content.parts[0].text;
+
+                // 3. UI: Додаємо відповідь бота
+                appendMessage(botReply, 'bot-msg');
+
+                // Зберігаємо відповідь бота в історію
+                chatHistory.push({ role: "model", parts: [{ text: botReply }] });
+
+            } catch (error) {
+                console.error(error);
+                appendMessage(`⚠️ Помилка: ${error.message}`, 'error-msg');
+            } finally {
+                btn.disabled = false;
+                typing.style.display = 'none';
+                input.focus();
+            }
+        }
+
+        function appendMessage(text, className) {
+            const chatBox = document.getElementById('chat-box');
+            const div = document.createElement('div');
+            div.className = `message ${className}`;
+
+            // Форматування Markdown -> HTML
+            let formatted = text
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Жирний
+                .replace(/\* (.*?)\n/g, '• $1<br>') // Списки
+                .replace(/\n/g, '<br>'); // Переноси
+
+            div.innerHTML = formatted;
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        document.getElementById("user-input").addEventListener("keypress", (e) => {
+            if (e.key === "Enter") sendMessage();
+        });
+    </script>
+
+</body>
+
+</html>
